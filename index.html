@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chemické sklo a nádobí</title>
+  <style>
+    :root {
+      --bg: #fff5f5;
+      --card: #ffffff;
+      --text: #2b1115;
+      --muted: #786166;
+      --primary: #e11d48;
+      --primary-hover: #be123c;
+      --primary-soft: #ffe4e6;
+      --success: #15803d;
+      --success-bg: #dcfce7;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
+      --border: #f2d6dc;
+      --shadow: 0 18px 45px rgba(80, 15, 30, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, input { font: inherit; }
+    button { border: 0; }
+
+    .app-shell {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .start-card, .result-card, .access-card {
+      max-width: 780px;
+      margin: 7vh auto 0;
+      padding: clamp(24px, 5vw, 48px);
+    }
+
+    .game-card { padding: clamp(22px, 4vw, 42px); }
+
+    h1, h2, p { margin-top: 0; }
+    h1 { font-size: clamp(2rem, 6vw, 3.6rem); line-height: 1.06; margin-bottom: 14px; }
+    h2 { font-size: clamp(1.45rem, 3vw, 2.3rem); line-height: 1.25; }
+
+    .lead { color: var(--muted); line-height: 1.65; margin-bottom: 28px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-weight: 800; }
+
+    .field input {
+      width: 100%;
+      min-height: 54px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.14);
+    }
+
+    .button {
+      min-height: 52px;
+      padding: 13px 22px;
+      border-radius: 14px;
+      font-weight: 850;
+      cursor: pointer;
+      transition: background .2s ease, transform .2s ease;
+    }
+
+    .button:hover:not(:disabled) { transform: translateY(-1px); }
+    .button:disabled { opacity: .55; cursor: not-allowed; }
+    .button-primary { background: var(--primary); color: #fff; }
+    .button-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .button-wide { width: 100%; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff8f8;
+    }
+
+    .counter, .score { font-weight: 850; white-space: nowrap; }
+    .counter { color: var(--muted); }
+    .score { color: var(--primary); }
+
+    .progress-wrap {
+      width: 100%;
+      height: 11px;
+      background: #f3d7dc;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: var(--primary);
+      border-radius: inherit;
+      transition: width .3s ease;
+    }
+
+    .question-area { display: grid; gap: 24px; }
+
+    .question-text {
+      margin: 0;
+      text-align: center;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 900;
+    }
+
+    .question-image-wrap { display: flex; justify-content: center; }
+
+    .question-image {
+      display: block;
+      width: min(100%, 720px);
+      max-height: 460px;
+      object-fit: contain;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fff;
+      cursor: zoom-in;
+    }
+
+    /* POČÍTAČ: 3 odpovědi vedle sebe */
+    .answers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .answer {
+      min-height: 72px;
+      padding: 16px 18px;
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--text);
+      text-align: center;
+      font-weight: 800;
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+
+    .answer:hover:not(:disabled) {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .answer.correct {
+      border-color: var(--success);
+      background: var(--success-bg);
+      color: #14532d;
+    }
+
+    .answer.wrong {
+      border-color: var(--danger);
+      background: var(--danger-bg);
+      color: #7f1d1d;
+    }
+
+    .feedback {
+      min-height: 30px;
+      margin: 18px 0 0;
+      text-align: center;
+      font-weight: 850;
+    }
+    .feedback.good { color: var(--success); }
+    .feedback.bad { color: var(--danger); }
+
+    .next-row { display: flex; justify-content: flex-end; margin-top: 22px; }
+
+    .final-score {
+      margin: 22px 0;
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--primary-soft);
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    .result-grid { display: grid; gap: 12px; margin: 24px 0; }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-row span { color: var(--muted); }
+
+    .saved-message {
+      display: none;
+      margin: 20px 0 0;
+      padding: 15px;
+      border-radius: 14px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      text-align: center;
+      font-weight: 800;
+    }
+    .saved-message.visible { display: block; }
+    .saved-message.error { background: var(--danger-bg); color: var(--danger); }
+
+    .answer-review { margin-top: 30px; }
+    .review-item { padding: 16px 0; border-top: 1px solid var(--border); }
+    .review-question { margin-bottom: 8px; font-weight: 850; }
+    .review-answer { margin: 0; font-weight: 750; line-height: 1.5; }
+    .review-answer.correct { color: var(--success); }
+    .review-answer.wrong { color: var(--danger); }
+    .review-icon { display: inline-block; width: 1.5em; font-weight: 900; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 5, 8, .88);
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 16px; background: #fff; }
+    .modal-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #fff;
+      color: #111;
+      font-size: 1.7rem;
+      cursor: pointer;
+    }
+
+    .access-card { text-align: center; }
+    .access-icon { font-size: 3rem; margin-bottom: 12px; }
+    .access-message { color: var(--muted); line-height: 1.6; }
+
+    /* MOBIL: odpovědi pod sebou */
+    @media (max-width: 760px) {
+      .app-shell { width: min(100% - 18px, 1160px); padding-top: 12px; }
+      .start-card, .result-card, .access-card { margin-top: 3vh; }
+      .form-grid { grid-template-columns: 1fr; }
+      .answers-grid { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr auto; }
+      .progress-wrap { grid-column: 1 / -1; grid-row: 2; }
+      .next-row .button { width: 100%; }
+    }
+
+    @media (max-width: 430px) {
+      .card { border-radius: 18px; }
+      .start-card, .game-card, .result-card, .access-card { padding: 20px; }
+      .result-row { flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section id="accessScreen" class="screen">
+      <div class="card access-card">
+        <div id="accessStatusIcon" class="access-icon">⏳</div>
+        <h1 id="accessStatusTitle">Kontroluji dostupnost hry</h1>
+        <p id="accessStatusMessage" class="access-message">Ověřuji, zda je hra právě zapnutá.</p>
+      </div>
+    </section>
+
+    <section id="startScreen" class="screen">
+      <div class="card start-card">
+        <h1 id="startGameTitle">Chemické sklo a nádobí</h1>
+        <p class="lead">Vyplň své jméno a třídu. Potom klikni na tlačítko Začít hru. V každé hře dostaneš náhodně 20 otázek ze 40.</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="studentName">Jméno</label>
+            <input id="studentName" type="text" autocomplete="name" placeholder="Např. Jan Novák">
+          </div>
+          <div class="field">
+            <label for="studentClass">Třída</label>
+            <input id="studentClass" type="text" placeholder="Např. 2.A">
+          </div>
+        </div>
+        <button id="startButton" class="button button-primary button-wide" type="button">Začít hru</button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="card game-card">
+        <div class="topbar">
+          <div id="questionCounter" class="counter">Otázka 1 / 20</div>
+          <div class="progress-wrap" aria-label="Průběh hry"><div id="progressBar" class="progress-bar"></div></div>
+          <div id="scoreDisplay" class="score">Skóre: 0</div>
+        </div>
+
+        <div class="question-area">
+          <h2 id="questionText" class="question-text"></h2>
+          <div id="questionImageWrap" class="question-image-wrap"></div>
+          <div id="answersGrid" class="answers-grid"></div>
+        </div>
+
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+        <div class="next-row">
+          <button id="nextButton" class="button button-primary" type="button" disabled>Další otázka</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen">
+      <div class="card result-card">
+        <h1>Výsledek</h1>
+        <div id="finalScore" class="final-score"></div>
+        <div class="result-grid">
+          <div class="result-row"><span>Jméno</span><strong id="resultName"></strong></div>
+          <div class="result-row"><span>Třída</span><strong id="resultClass"></strong></div>
+          <div class="result-row"><span>Název hry</span><strong id="resultGame"></strong></div>
+          <div class="result-row"><span>Procenta</span><strong id="resultPercent"></strong></div>
+        </div>
+        <p id="savedMessage" class="saved-message"></p>
+        <div class="answer-review">
+          <h2>Přehled odpovědí</h2>
+          <div id="answerReview"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="imageModal" class="modal" role="dialog" aria-modal="true" aria-label="Zvětšený obrázek">
+    <button id="modalClose" class="modal-close" type="button" aria-label="Zavřít">×</button>
+    <img id="modalImage" src="" alt="Zvětšený obrázek">
+  </div>
+
+  <script>
+    const GAME_TITLE = "Chemické sklo a nádobí";
+    const NUMBER_OF_QUESTIONS = 20;
+    const IMAGE_PATH = "nadobi/";
+    const GAME_STATUS_FILE = "stav.txt";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwqg3kg-sqkUeHhTbJJXy_6a1lTSxnTl9mT-Z3FrNNlj6ypa-2as1KmDfNw_qZyE4Vs/exec";
+
+    const QUESTIONS = [
+  {
+    "type": "image",
+    "image": "zkumavka.jpg",
+    "answers": [
+      {
+        "text": "zkumavka",
+        "correct": true
+      },
+      {
+        "text": "odsávací zkumavka",
+        "correct": false
+      },
+      {
+        "text": "odměrný válec",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "odsavaci_zkumavka.jpg",
+    "answers": [
+      {
+        "text": "odsávací zkumavka",
+        "correct": true
+      },
+      {
+        "text": "zkumavka",
+        "correct": false
+      },
+      {
+        "text": "odsávací baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "kadinka.jpg",
+    "answers": [
+      {
+        "text": "kádinka",
+        "correct": true
+      },
+      {
+        "text": "titrační baňka",
+        "correct": false
+      },
+      {
+        "text": "odměrný válec",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "titracni_banka.jpg",
+    "answers": [
+      {
+        "text": "titrační baňka",
+        "correct": true
+      },
+      {
+        "text": "Erlenmeyerova baňka",
+        "correct": false
+      },
+      {
+        "text": "varná baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "varna_banka.jpg",
+    "answers": [
+      {
+        "text": "varná baňka",
+        "correct": true
+      },
+      {
+        "text": "frakční baňka",
+        "correct": false
+      },
+      {
+        "text": "titrační baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "frakcni_banka.jpg",
+    "answers": [
+      {
+        "text": "frakční baňka",
+        "correct": true
+      },
+      {
+        "text": "varná baňka",
+        "correct": false
+      },
+      {
+        "text": "odsávací baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "Erlenmeyerova_banka.jpg",
+    "answers": [
+      {
+        "text": "Erlenmeyerova baňka",
+        "correct": true
+      },
+      {
+        "text": "titrační baňka",
+        "correct": false
+      },
+      {
+        "text": "odsávací baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "nalevka.jpg",
+    "answers": [
+      {
+        "text": "nálevka",
+        "correct": true
+      },
+      {
+        "text": "dělící nálevka",
+        "correct": false
+      },
+      {
+        "text": "Büchnerova nálevka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "chladic.jpg",
+    "answers": [
+      {
+        "text": "chladič",
+        "correct": true
+      },
+      {
+        "text": "dělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "byreta",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "delena_pipeta.jpg",
+    "answers": [
+      {
+        "text": "dělená pipeta",
+        "correct": true
+      },
+      {
+        "text": "nedělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "byreta",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "nedelena_pipeta.jpg",
+    "answers": [
+      {
+        "text": "nedělená pipeta",
+        "correct": true
+      },
+      {
+        "text": "dělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "byreta",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "delici_nalevka.jpg",
+    "answers": [
+      {
+        "text": "dělící nálevka",
+        "correct": true
+      },
+      {
+        "text": "nálevka",
+        "correct": false
+      },
+      {
+        "text": "Büchnerova nálevka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "byreta.jpg",
+    "answers": [
+      {
+        "text": "byreta",
+        "correct": true
+      },
+      {
+        "text": "dělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "odměrný válec",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "promyvacka.jpg",
+    "answers": [
+      {
+        "text": "promývačka",
+        "correct": true
+      },
+      {
+        "text": "chladič",
+        "correct": false
+      },
+      {
+        "text": "odsávací baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "odsavaci_banka.jpg",
+    "answers": [
+      {
+        "text": "odsávací baňka",
+        "correct": true
+      },
+      {
+        "text": "Erlenmeyerova baňka",
+        "correct": false
+      },
+      {
+        "text": "titrační baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "odmerna_banka.jpg",
+    "answers": [
+      {
+        "text": "odměrná baňka",
+        "correct": true
+      },
+      {
+        "text": "varná baňka",
+        "correct": false
+      },
+      {
+        "text": "titrační baňka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "odmerny_valec.jpg",
+    "answers": [
+      {
+        "text": "odměrný válec",
+        "correct": true
+      },
+      {
+        "text": "kádinka",
+        "correct": false
+      },
+      {
+        "text": "zkumavka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "porcelanovy_kelimek.jpg",
+    "answers": [
+      {
+        "text": "porcelánový kelímek",
+        "correct": true
+      },
+      {
+        "text": "třecí miska s tloučkem",
+        "correct": false
+      },
+      {
+        "text": "hodinové sklo",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "treci_miska_s_tlouckem.jpg",
+    "answers": [
+      {
+        "text": "třecí miska s tloučkem",
+        "correct": true
+      },
+      {
+        "text": "porcelánový kelímek",
+        "correct": false
+      },
+      {
+        "text": "Büchnerova nálevka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "Buchnerova_nalevka.jpg",
+    "answers": [
+      {
+        "text": "Büchnerova nálevka",
+        "correct": true
+      },
+      {
+        "text": "nálevka",
+        "correct": false
+      },
+      {
+        "text": "dělící nálevka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "hodinove_sklo.jpg",
+    "answers": [
+      {
+        "text": "hodinové sklo",
+        "correct": true
+      },
+      {
+        "text": "keramická síťka",
+        "correct": false
+      },
+      {
+        "text": "porcelánový kelímek",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "chemicka_lzicka.jpg",
+    "answers": [
+      {
+        "text": "chemická lžička",
+        "correct": true
+      },
+      {
+        "text": "chemické kleště",
+        "correct": false
+      },
+      {
+        "text": "držák",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "keramicka_sitka.jpg",
+    "answers": [
+      {
+        "text": "keramická síťka",
+        "correct": true
+      },
+      {
+        "text": "triangl",
+        "correct": false
+      },
+      {
+        "text": "varný kruh",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "varny_kruh.jpg",
+    "answers": [
+      {
+        "text": "varný kruh",
+        "correct": true
+      },
+      {
+        "text": "triangl",
+        "correct": false
+      },
+      {
+        "text": "svorka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "triangl.jpg",
+    "answers": [
+      {
+        "text": "triangl",
+        "correct": true
+      },
+      {
+        "text": "železný kruh",
+        "correct": false
+      },
+      {
+        "text": "keramická síťka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "kahan.jpg",
+    "answers": [
+      {
+        "text": "kahan",
+        "correct": true
+      },
+      {
+        "text": "stojan",
+        "correct": false
+      },
+      {
+        "text": "promývačka",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "stojan.jpg",
+    "answers": [
+      {
+        "text": "stojan",
+        "correct": true
+      },
+      {
+        "text": "kahan",
+        "correct": false
+      },
+      {
+        "text": "držák",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "svorka.jpg",
+    "answers": [
+      {
+        "text": "svorka",
+        "correct": true
+      },
+      {
+        "text": "držák",
+        "correct": false
+      },
+      {
+        "text": "chemické kleště",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "drzak.jpg",
+    "answers": [
+      {
+        "text": "držák",
+        "correct": true
+      },
+      {
+        "text": "svorka",
+        "correct": false
+      },
+      {
+        "text": "držák na zkumavky",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "chemicke_kleste.jpg",
+    "answers": [
+      {
+        "text": "chemické kleště",
+        "correct": true
+      },
+      {
+        "text": "chemická lžička",
+        "correct": false
+      },
+      {
+        "text": "držák na zkumavky",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "drzak_na_zkumavky.jpg",
+    "answers": [
+      {
+        "text": "držák na zkumavky",
+        "correct": true
+      },
+      {
+        "text": "držák",
+        "correct": false
+      },
+      {
+        "text": "chemické kleště",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "stricka.jpg",
+    "answers": [
+      {
+        "text": "střička",
+        "correct": true
+      },
+      {
+        "text": "promývačka",
+        "correct": false
+      },
+      {
+        "text": "kapátko",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "filtracni_kruh.jpg",
+    "answers": [
+      {
+        "text": "filtrační kruh",
+        "correct": true
+      },
+      {
+        "text": "varný kruh",
+        "correct": false
+      },
+      {
+        "text": "triangl",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "sklenena_tycinka.jpg",
+    "answers": [
+      {
+        "text": "skleněná tyčinka",
+        "correct": true
+      },
+      {
+        "text": "dělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "chemická lžička",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "lodicka.jpg",
+    "answers": [
+      {
+        "text": "lodička",
+        "correct": true
+      },
+      {
+        "text": "hodinové sklo",
+        "correct": false
+      },
+      {
+        "text": "porcelánový kelímek",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "kapatko.jpg",
+    "answers": [
+      {
+        "text": "kapátko",
+        "correct": true
+      },
+      {
+        "text": "nedělená pipeta",
+        "correct": false
+      },
+      {
+        "text": "střička",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "Petriho_miska.jpg",
+    "answers": [
+      {
+        "text": "Petriho miska",
+        "correct": true
+      },
+      {
+        "text": "hodinové sklo",
+        "correct": false
+      },
+      {
+        "text": "porcelánový kelímek",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "stojan_na_zkumavky.jpg",
+    "answers": [
+      {
+        "text": "stojan na zkumavky",
+        "correct": true
+      },
+      {
+        "text": "držák na zkumavky",
+        "correct": false
+      },
+      {
+        "text": "stojan",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "porcelanova_miska.jpg",
+    "answers": [
+      {
+        "text": "porcelánová miska",
+        "correct": true
+      },
+      {
+        "text": "porcelánový kelímek",
+        "correct": false
+      },
+      {
+        "text": "třecí miska s tloučkem",
+        "correct": false
+      }
+    ]
+  },
+  {
+    "type": "image",
+    "image": "zasobni_lahev.jpg",
+    "answers": [
+      {
+        "text": "zásobní láhev",
+        "correct": true
+      },
+      {
+        "text": "odměrná baňka",
+        "correct": false
+      },
+      {
+        "text": "promývačka",
+        "correct": false
+      }
+    ]
+  }
+];
+
+    const startScreen = document.getElementById("startScreen");
+    const accessScreen = document.getElementById("accessScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const resultScreen = document.getElementById("resultScreen");
+    const accessStatusIcon = document.getElementById("accessStatusIcon");
+    const accessStatusTitle = document.getElementById("accessStatusTitle");
+    const accessStatusMessage = document.getElementById("accessStatusMessage");
+    const startGameTitle = document.getElementById("startGameTitle");
+    const studentNameInput = document.getElementById("studentName");
+    const studentClassInput = document.getElementById("studentClass");
+    const startButton = document.getElementById("startButton");
+    const questionCounter = document.getElementById("questionCounter");
+    const progressBar = document.getElementById("progressBar");
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    const questionText = document.getElementById("questionText");
+    const questionImageWrap = document.getElementById("questionImageWrap");
+    const answersGrid = document.getElementById("answersGrid");
+    const feedback = document.getElementById("feedback");
+    const nextButton = document.getElementById("nextButton");
+    const resultName = document.getElementById("resultName");
+    const resultClass = document.getElementById("resultClass");
+    const resultGame = document.getElementById("resultGame");
+    const resultPercent = document.getElementById("resultPercent");
+    const finalScore = document.getElementById("finalScore");
+    const savedMessage = document.getElementById("savedMessage");
+    const answerReview = document.getElementById("answerReview");
+    const imageModal = document.getElementById("imageModal");
+    const modalImage = document.getElementById("modalImage");
+    const modalClose = document.getElementById("modalClose");
+
+    let activeQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answered = false;
+    let studentName = "";
+    let studentClass = "";
+    let answerHistory = [];
+    let gameEnabled = false;
+
+    startGameTitle.textContent = GAME_TITLE;
+    document.title = GAME_TITLE;
+
+    function shuffleArray(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getImageSource(imageName) {
+      if (!imageName) return "";
+      const absolute = imageName.startsWith("http://") || imageName.startsWith("https://") || imageName.startsWith("/") || imageName.startsWith("data:");
+      return absolute ? imageName : IMAGE_PATH + imageName;
+    }
+
+    function showScreen(screen) {
+      [startScreen, accessScreen, gameScreen, resultScreen].forEach(el => el.classList.remove("active"));
+      screen.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function checkGameAvailability() {
+      showScreen(accessScreen);
+      accessStatusIcon.textContent = "⏳";
+      accessStatusTitle.textContent = "Kontroluji dostupnost hry";
+      accessStatusMessage.textContent = "Ověřuji, zda je hra právě zapnutá.";
+
+      if (location.protocol === "file:") {
+        gameEnabled = true;
+        showScreen(startScreen);
+        return;
+      }
+
+      try {
+        const separator = GAME_STATUS_FILE.includes("?") ? "&" : "?";
+        const response = await fetch(`${GAME_STATUS_FILE}${separator}t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const status = (await response.text()).trim().toUpperCase();
+
+        if (status === "ZAPNUTO") {
+          gameEnabled = true;
+          showScreen(startScreen);
+        } else {
+          gameEnabled = false;
+          accessStatusIcon.textContent = "🔒";
+          accessStatusTitle.textContent = "Hra je nyní vypnutá";
+          accessStatusMessage.textContent = "Tuto hru teď nelze spustit. Zkus to prosím později.";
+        }
+      } catch (error) {
+        gameEnabled = false;
+        accessStatusIcon.textContent = "⚠️";
+        accessStatusTitle.textContent = "Hru se nepodařilo ověřit";
+        accessStatusMessage.textContent = "Nepodařilo se načíst soubor stav.txt. Zkontroluj, že je ve stejné složce jako HTML soubor.";
+        console.error(error);
+      }
+    }
+
+    function validateQuestions() {
+      if (!Array.isArray(QUESTIONS) || QUESTIONS.length < NUMBER_OF_QUESTIONS) {
+        alert(`Je potřeba alespoň ${NUMBER_OF_QUESTIONS} otázek.`);
+        return false;
+      }
+
+      for (let i = 0; i < QUESTIONS.length; i++) {
+        const q = QUESTIONS[i];
+        if (q.type !== "image" || !q.image || !Array.isArray(q.answers) || q.answers.length < 2) {
+          alert(`Chyba ve formátu otázky č. ${i + 1}.`);
+          return false;
+        }
+        if (q.answers.filter(a => a.correct === true).length !== 1) {
+          alert(`Otázka č. ${i + 1} musí mít právě jednu správnou odpověď.`);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function startGame() {
+      if (!gameEnabled) return checkGameAvailability();
+
+      studentName = studentNameInput.value.trim();
+      studentClass = studentClassInput.value.trim();
+      if (!studentName || !studentClass) {
+        alert("Vyplň prosím jméno i třídu.");
+        return;
+      }
+      if (!validateQuestions()) return;
+
+      activeQuestions = shuffleArray(QUESTIONS).slice(0, NUMBER_OF_QUESTIONS);
+      currentQuestionIndex = 0;
+      score = 0;
+      answered = false;
+      answerHistory = [];
+      showScreen(gameScreen);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = activeQuestions[currentQuestionIndex];
+      answered = false;
+      nextButton.disabled = true;
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      questionCounter.textContent = `Otázka ${currentQuestionIndex + 1} / ${activeQuestions.length}`;
+      scoreDisplay.textContent = `Skóre: ${score}`;
+      progressBar.style.width = `${((currentQuestionIndex + 1) / activeQuestions.length) * 100}%`;
+
+      questionText.textContent = "Co je na obrázku?";
+      questionImageWrap.innerHTML = "";
+      answersGrid.innerHTML = "";
+
+      const img = document.createElement("img");
+      img.className = "question-image";
+      img.src = getImageSource(q.image);
+      img.alt = "Obrázek laboratorního vybavení";
+      img.addEventListener("click", () => openImageModal(img.src, img.alt));
+      img.addEventListener("error", () => {
+        img.alt = `Obrázek se nepodařilo načíst: ${q.image}`;
+      });
+      questionImageWrap.appendChild(img);
+
+      shuffleArray(q.answers).forEach(answer => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer";
+        button.textContent = answer.text;
+        button.addEventListener("click", () => selectAnswer(button, answer, q));
+        answersGrid.appendChild(button);
+      });
+    }
+
+    function selectAnswer(selectedButton, selectedAnswer, question) {
+      if (answered) return;
+      answered = true;
+
+      const correctAnswer = question.answers.find(a => a.correct);
+      const isCorrect = selectedAnswer.correct === true;
+      if (isCorrect) score++;
+
+      [...answersGrid.children].forEach(button => {
+        button.disabled = true;
+        const answerData = question.answers.find(a => a.text === button.textContent);
+        if (answerData?.correct) button.classList.add("correct");
+      });
+
+      if (!isCorrect) selectedButton.classList.add("wrong");
+
+      feedback.textContent = isCorrect ? "Správně!" : `Nesprávně. Správná odpověď je: ${correctAnswer.text}`;
+      feedback.classList.add(isCorrect ? "good" : "bad");
+      scoreDisplay.textContent = `Skóre: ${score}`;
+
+      answerHistory.push({
+        question: `Co je na obrázku? (${question.image})`,
+        selectedAnswer: selectedAnswer.text,
+        correctAnswer: correctAnswer.text,
+        isCorrect
+      });
+
+      nextButton.disabled = false;
+    }
+
+    function goToNextQuestion() {
+      if (!answered) return;
+      if (currentQuestionIndex < activeQuestions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      const total = activeQuestions.length;
+      const percent = Math.round((score / total) * 100);
+      resultName.textContent = studentName;
+      resultClass.textContent = studentClass;
+      resultGame.textContent = GAME_TITLE;
+      resultPercent.textContent = `${percent} %`;
+      finalScore.textContent = `Správně ${score} z ${total} otázek (${percent} %)`;
+      renderAnswerReview();
+      showScreen(resultScreen);
+      saveResult({ name: studentName, className: studentClass, game: GAME_TITLE, correct: score, total, percent });
+    }
+
+    function renderAnswerReview() {
+      answerReview.innerHTML = "";
+      answerHistory.forEach((item, index) => {
+        const wrap = document.createElement("div");
+        wrap.className = "review-item";
+
+        const q = document.createElement("div");
+        q.className = "review-question";
+        q.textContent = `${index + 1}. ${item.question}`;
+
+        const a = document.createElement("p");
+        a.className = `review-answer ${item.isCorrect ? "correct" : "wrong"}`;
+        const icon = document.createElement("span");
+        icon.className = "review-icon";
+        icon.textContent = item.isCorrect ? "✓" : "✗";
+        const text = document.createElement("span");
+        text.textContent = item.isCorrect ? item.selectedAnswer : `${item.selectedAnswer} (správně: ${item.correctAnswer})`;
+
+        a.append(icon, text);
+        wrap.append(q, a);
+        answerReview.appendChild(wrap);
+      });
+    }
+
+    async function saveResult(result) {
+      savedMessage.classList.remove("visible", "error");
+      const payload = {
+        name: result.name,
+        class: result.className,
+        game: result.game,
+        score: result.correct,
+        total: result.total,
+        percent: result.percent
+      };
+
+      try {
+        await fetch(scriptURL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload),
+          mode: "no-cors"
+        });
+        savedMessage.textContent = "Výsledek byl odeslán k uložení.";
+        savedMessage.classList.add("visible");
+      } catch (error) {
+        savedMessage.textContent = "Výsledek se nepodařilo odeslat.";
+        savedMessage.classList.add("visible", "error");
+        console.error(error);
+      }
+    }
+
+    function openImageModal(src, alt) {
+      modalImage.src = src;
+      modalImage.alt = alt || "Zvětšený obrázek";
+      imageModal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeImageModal() {
+      imageModal.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    startButton.addEventListener("click", startGame);
+    nextButton.addEventListener("click", goToNextQuestion);
+    modalClose.addEventListener("click", closeImageModal);
+    imageModal.addEventListener("click", e => { if (e.target === imageModal) closeImageModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeImageModal(); });
+    [studentNameInput, studentClassInput].forEach(input => input.addEventListener("keydown", e => { if (e.key === "Enter") startGame(); }));
+
+    checkGameAvailability();
+  </script>
+</body>
+</html>
